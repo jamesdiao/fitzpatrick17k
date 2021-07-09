@@ -117,7 +117,7 @@ class SkinDataset():
             idx = idx.tolist()
         img_name = os.path.join(self.root_dir,
                                 self.df.loc[self.df.index[idx], 'hasher'])
-        image = io.imread(img_name)
+        image = io.imread(img_name + '.jpg')
         if(len(image.shape) < 3):
             image = skimage.color.gray2rgb(image)
 
@@ -144,7 +144,7 @@ def custom_load(
         num_workers=20,
         train_dir='',
         val_dir='',
-        image_dir='***************** Specify Image Directory Here *************'):
+        image_dir='data/finalfitz17k'):
     val = pd.read_csv(val_dir)
     train = pd.read_csv(train_dir)
     class_sample_count = np.array(train[label].value_counts().sort_index())
@@ -217,7 +217,8 @@ if __name__ == '__main__':
     df["high"] = df['three_partition_label'].astype('category').cat.codes
     df["hasher"] = df["md5hash"]
 
-    for holdout_set in ["expert_select","random_holdout", "a12", "a34","a56", "dermaamin","br"] 
+    for holdout_set in ["expert_select","random_holdout", "a12", "a34","a56", "dermaamin","br"]:
+        print("\n Holdout Set: {} \n".format(holdout_set))
         if holdout_set == "expert_select":
             df2 = df
             train = df2[df2.qc.isnull()]
@@ -268,8 +269,6 @@ if __name__ == '__main__':
             test = test[test.label.isin(combo)].reset_index()
             train["low"] = train['label'].astype('category').cat.codes
             test["low"] = test['label'].astype('category').cat.codes
-        print(test.shape)
-        print(test.shape)
         train_path = "temp_train.csv"
         test_path = "temp_test.csv"
         train.to_csv(train_path, index=False)
@@ -303,7 +302,7 @@ if __name__ == '__main__':
             print('{} total trainable parameters'.format(total_trainable_params))
             model_ft = model_ft.to(device)
             model_ft = nn.DataParallel(model_ft)
-            class_weights = torch.FloatTensor(weights).cuda()
+            class_weights = torch.FloatTensor(weights) #.cuda()
             criterion = nn.NLLLoss()
             optimizer_ft = optim.Adam(model_ft.parameters())
             exp_lr_scheduler = lr_scheduler.StepLR(
@@ -320,7 +319,6 @@ if __name__ == '__main__':
                 exp_lr_scheduler, n_epochs)
             print("Training Complete")
             torch.save(model_ft.state_dict(), "model_path_{}_{}_{}.pth".format(n_epochs, label, holdout_set))
-            print("gold")
             training_results.to_csv("training_{}_{}_{}.csv".format(n_epochs, label, holdout_set))
             model = model_ft.eval()
             loader = dataloaders["val"]
@@ -366,7 +364,6 @@ if __name__ == '__main__':
                         d3.append(i[2])
                 for j in topk_p:
                     for i in j:
-                        print(i)
                         p1.append(i[0])
                         p2.append(i[1])
                         p3.append(i[2])
@@ -397,4 +394,5 @@ if __name__ == '__main__':
             df_x.to_csv("results_{}_{}_{}.csv".format(n_epochs, label, holdout_set),
                             index=False)
             print("\n Accuracy: {} \n".format(acc))
-        print("done")
+        print("Done")
+
